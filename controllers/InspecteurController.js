@@ -3,7 +3,6 @@ const { PDFDocument } = require('pdf-lib');
 const AWS = require("aws-sdk");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
-const fs = require('fs');
 const { DO_SPACES_ENDPOINT, DO_SPACES_KEY, DO_SPACES_SECRET, DO_SPACES_NAME } = require('../config');
 const spacesEndpoint = new AWS.Endpoint(DO_SPACES_ENDPOINT);
 const s3 = new AWS.S3({ endpoint: spacesEndpoint, accessKeyId: DO_SPACES_KEY, secretAccessKey: DO_SPACES_SECRET });
@@ -41,7 +40,6 @@ async function createPdf(input, output) {
       .getForm()
       .getFields()
       .map((f) => f.getName());
-    console.log({ fieldNames });
 
     const form = pdfDoc.getForm();
 
@@ -64,7 +62,7 @@ async function createPdf(input, output) {
     await writeFile(output, pdfBytes);
     res.json( { msg : "succes"}).status(200);
   } catch (err) {
-    console.log(err);
+    res.json( { msg : "echec"}).status(400);
   }
 }
 
