@@ -3,7 +3,9 @@ const router = express.Router();
 const InspecteurController = require('../controllers/InspecteurController');
 
 
-router.get('/add', InspecteurController.add);
+router.post('/add', InspecteurController.add);
+router.get('/get/:identite',InspecteurController.get);
+
 
 
 module.exports = router;
