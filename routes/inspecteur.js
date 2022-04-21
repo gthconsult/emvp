@@ -5,6 +5,8 @@ const InspecteurController = require('../controllers/InspecteurController');
 
 router.post('/add', InspecteurController.add);
 router.get('/get/:identite',InspecteurController.get);
+router.get('/delete/:iid',InspecteurController.delete);
+router.get('/edit/:iid',InspecteurController.edit);
 
 
 
