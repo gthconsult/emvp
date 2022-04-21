@@ -123,8 +123,10 @@ exports.delete = async (req, res, next) => {
     id: iid
   });
 
+  const inspecteurId = await inspecteur._id;
+
   // delete in MongoDB
-  await Inspecteur.findByIdAndRemove(inspecteur._id)
+  await Inspecteur.findByIdAndRemove(inspecteurId)
     .then(() => {
       fs.unlink(`./inspecteur/output-${inspecteur.identite}.pdf`, (err, data) => {
         if (err && err.code == 'ENOENT') {
@@ -148,23 +150,84 @@ exports.delete = async (req, res, next) => {
 // edit file Inspecteur ---------------------------------------------------------------------------------------
 exports.edit = async (req, res, next) => {
 
+  const { iid } = req.params
   const {
-    iid
-  } = req.params
-  const inspecteur = await Inspecteur.findOne({
-    id: iid
-  });
+    nom,
+    prenom,
+    email,
+    password,
+    adresses,
+    telephone,
+    postal,
+    ville,
+    identite,
+    metier,
+    pays,
+    passe,
+    date
+  } = req.body
 
+  let inspecteurInfo = {
+    nom,
+    prenom,
+    email,
+    password,
+    adresses,
+    telephone,
+    postal,
+    ville,
+    identite,
+    pays,
+    metier,
+    passe,
+    date,
+}
+  const inspecteur = await Inspecteur.findOne({ id: iid });
+  const inspecteurId = await inspecteur._id;
   // delete in MongoDB
-  const succesDeleteInspecteur = await Inspecteur.findByIdAndRemove(inspecteur._id);
-  if (succesDeleteInspecteur) {
+  const succesUpdateInspecteur = await Inspecteur.findByIdAndUpdate(inspecteurId, { $set: inspecteurInfo });
+  console.log(succesUpdateInspecteur)
 
-    fs.unlink(`./inspecteur/output-${inspecteur.identite}.pdf`, function (err, data) {
-      fs.copyFile('./inspecteur/output.pdf', `./inspecteur/output-${inspecteur.identite}.pdf`, function(err, result) {
-         if(err) console.log('error', err);
-       });
-     });
-     
+  if (succesUpdateInspecteur)
+   {
+
+    fs.unlink(`./inspecteur/output-${inspecteur.identite}.pdf`, async (err, data) => {
+      fs.copyFile('./inspecteur/output.pdf', `./inspecteur/output-${inspecteur.identite}.pdf`, async (err, result) => {
+        if (err) {
+          console.log('error', err);
+        }
+      });
+    });
+
+    const input = `./inspecteur/info-inspecteur.pdf`;
+    const output = `./inspecteur/output-${inspecteur.identite}.pdf`
+    const pdfDoc = await PDFDocument.load(await readFile(input));
+    const fieldNames = pdfDoc
+      .getForm()
+      .getFields()
+      .map((f) => f.getName());
+    const form = pdfDoc.getForm();
+    form.getTextField('id').setText(`${succesUpdateInspecteur.id}`);
+    form.getTextField('prenom').setText(`${succesUpdateInspecteur.prenom}`);
+    form.getTextField('nom').setText(`${succesUpdateInspecteur.nom}`);
+    form.getTextField('email').setText(`${succesUpdateInspecteur.email}`);
+    form.getTextField('adresses').setText(`${succesUpdateInspecteur.adresses}`);
+    form.getTextField('telephone').setText(`${succesUpdateInspecteur.telephone}`);
+    form.getTextField('postal').setText(`${succesUpdateInspecteur.postal}`);
+    form.getTextField('ville').setText(`${succesUpdateInspecteur.ville}`);
+    form.getTextField('pays').setText(`${succesUpdateInspecteur.pays}`);
+    form.getTextField('identite').setText(`${succesUpdateInspecteur.identite}`);
+    form.getTextField('metier').setText(`${succesUpdateInspecteur.metier}`);
+    form.getTextField('passe').setText(`${succesUpdateInspecteur.passe}`);
+    form.getTextField('date').setText(`${succesUpdateInspecteur.date}`);
+
+    //form.getCheckBox('Check Box7').check();
+    const pdfBytes = await pdfDoc.save();
+    await writeFile(output, pdfBytes);
+    res.send({
+      msg: "Le compte a été activé avec succès, vous pouvez maintenant télécharger un fichier pdf"
+    });
+
   }
 
 }
