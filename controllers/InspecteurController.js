@@ -29,7 +29,7 @@ exports.add = async (req, res, next) => {
     metier,
     id,
     pays,
-    passe,
+    password,
     date,
     validate,
   } = req.body
@@ -46,7 +46,7 @@ exports.add = async (req, res, next) => {
     metier: metier,
     id: id,
     pays: pays,
-    passe: passe,
+    password: password,
     date: date,
     validate: validate,
   }).save();
@@ -73,7 +73,7 @@ exports.add = async (req, res, next) => {
       form.getTextField('pays').setText(pays);
       form.getTextField('identite').setText(identite);
       form.getTextField('metier').setText(metier);
-      form.getTextField('passe').setText(passe);
+      form.getTextField('passe').setText(password);
       form.getTextField('date').setText(date);
 
       //form.getCheckBox('Check Box7').check();
@@ -149,9 +149,9 @@ exports.delete = async (req, res, next) => {
 
 // edit file Inspecteur ---------------------------------------------------------------------------------------
 exports.edit = async (req, res, next) => {
-
-  const { iid } = req.params
+  // request Get body
   const {
+    iid,
     nom,
     prenom,
     email,
@@ -163,36 +163,43 @@ exports.edit = async (req, res, next) => {
     identite,
     metier,
     pays,
-    passe,
-    date
-  } = req.body
-
-  let inspecteurInfo = {
-    nom,
-    prenom,
-    email,
-    password,
-    adresses,
-    telephone,
-    postal,
-    ville,
-    identite,
-    pays,
-    metier,
-    passe,
     date,
-}
-  const inspecteur = await Inspecteur.findOne({ id: iid });
-  const inspecteurId = await inspecteur._id;
-  // delete in MongoDB
-  const succesUpdateInspecteur = await Inspecteur.findByIdAndUpdate(inspecteurId, { $set: inspecteurInfo });
-  console.log(succesUpdateInspecteur)
+  } = await req.body
+  // reparing new info inspecteur
+  let inspecteurInfo = {
+    iid,
+    nom,
+    prenom,
+    email,
+    password,
+    adresses,
+    telephone,
+    postal,
+    ville,
+    identite,
+    pays,
+    metier,
+    date
+  }
 
-  if (succesUpdateInspecteur)
-   {
+  // get info inspecteur for id inspecteur in mongo db by iid id pochdb
+  const inspecteur = await Inspecteur.findOne({
+    id: iid
+  });
+  // id mongo DB
+  const inspecteurId = await inspecteur._id;
+  // update info inspecteur with id MongoDB
+  const succesUpdateInspecteur = await Inspecteur.findByIdAndUpdate(inspecteurId, {
+    $set: inspecteurInfo
+  });
+
+  // get info new Inspecteur
+  const infoNewInspecteur = await Inspecteur.findById(inspecteurId);
+
+  if (succesUpdateInspecteur) {
 
     fs.unlink(`./inspecteur/output-${inspecteur.identite}.pdf`, async (err, data) => {
-      fs.copyFile('./inspecteur/output.pdf', `./inspecteur/output-${inspecteur.identite}.pdf`, async (err, result) => {
+      fs.copyFile('./inspecteur/output.pdf', `./inspecteur/output-${infoNewInspecteur.identite}.pdf`, async (err, result) => {
         if (err) {
           console.log('error', err);
         }
@@ -200,26 +207,26 @@ exports.edit = async (req, res, next) => {
     });
 
     const input = `./inspecteur/info-inspecteur.pdf`;
-    const output = `./inspecteur/output-${inspecteur.identite}.pdf`
+    const output = `./inspecteur/output-${infoNewInspecteur.identite}.pdf`
     const pdfDoc = await PDFDocument.load(await readFile(input));
     const fieldNames = pdfDoc
       .getForm()
       .getFields()
       .map((f) => f.getName());
     const form = pdfDoc.getForm();
-    form.getTextField('id').setText(`${succesUpdateInspecteur.id}`);
-    form.getTextField('prenom').setText(`${succesUpdateInspecteur.prenom}`);
-    form.getTextField('nom').setText(`${succesUpdateInspecteur.nom}`);
-    form.getTextField('email').setText(`${succesUpdateInspecteur.email}`);
-    form.getTextField('adresses').setText(`${succesUpdateInspecteur.adresses}`);
-    form.getTextField('telephone').setText(`${succesUpdateInspecteur.telephone}`);
-    form.getTextField('postal').setText(`${succesUpdateInspecteur.postal}`);
-    form.getTextField('ville').setText(`${succesUpdateInspecteur.ville}`);
-    form.getTextField('pays').setText(`${succesUpdateInspecteur.pays}`);
-    form.getTextField('identite').setText(`${succesUpdateInspecteur.identite}`);
-    form.getTextField('metier').setText(`${succesUpdateInspecteur.metier}`);
-    form.getTextField('passe').setText(`${succesUpdateInspecteur.passe}`);
-    form.getTextField('date').setText(`${succesUpdateInspecteur.date}`);
+    form.getTextField('id').setText(`${infoNewInspecteur.id}`);
+    form.getTextField('prenom').setText(`${infoNewInspecteur.prenom}`);
+    form.getTextField('nom').setText(`${infoNewInspecteur.nom}`);
+    form.getTextField('email').setText(`${infoNewInspecteur.email}`);
+    form.getTextField('adresses').setText(`${infoNewInspecteur.adresses}`);
+    form.getTextField('telephone').setText(`${infoNewInspecteur.telephone}`);
+    form.getTextField('postal').setText(`${infoNewInspecteur.postal}`);
+    form.getTextField('ville').setText(`${infoNewInspecteur.ville}`);
+    form.getTextField('pays').setText(`${infoNewInspecteur.pays}`);
+    form.getTextField('identite').setText(`${infoNewInspecteur.identite}`);
+    form.getTextField('metier').setText(`${infoNewInspecteur.metier}`);
+    form.getTextField('passe').setText(`${infoNewInspecteur.password}`);
+    form.getTextField('date').setText(`${infoNewInspecteur.date}`);
 
     //form.getCheckBox('Check Box7').check();
     const pdfBytes = await pdfDoc.save();
